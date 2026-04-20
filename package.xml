@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>px4_commander</name>
+  <version>1.0.0</version>
+  <description>ROS2 package for controlling PX4</description>
+  <maintainer email="harpia@labnet.nce.ufrj.br">root</maintainer>
+  <license>MIT</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- ROS2 -->
+  <depend>rclcpp</depend>
+  <depend>std_srvs</depend>
+  <depend>px4_msgs</depend>
+
+  <buildtool_depend>ament_cmake_python</buildtool_depend>
+
+  <!-- ROS2 interfaces -->
+  <buildtool_depend>rosidl_default_generators</buildtool_depend>
+  <exec_depend>rosidl_default_runtime</exec_depend>
+  <member_of_group>rosidl_interface_packages</member_of_group>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

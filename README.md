@@ -139,18 +139,18 @@ target_link_libraries(meu_no px4_commander_client)
 ```python
 from px4_commander.px4_commander_client import Px4CommanderClient
 
-commander = Px4CommanderClient()
+px4_commander_client_ = Px4CommanderClient()
 
-success, message = commander.arm()
-success, message = commander.engage_offboard_mode()
-success, message = commander.engage_land_mode()
+success, message = px4_commander_client_.arm()
+success, message = px4_commander_client_.engage_offboard_mode()
+success, message = px4_commander_client_.engage_land_mode()
 
 # Ou acessando por atributo:
-result = commander.arm()
+result = px4_commander_client_.arm()
 if result.success:
     print(result.message)
 
-commander.destroy()
+px4_commander_client_.destroy()
 ```
 
 ### Exemplo completo

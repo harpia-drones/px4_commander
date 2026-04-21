@@ -11,15 +11,15 @@
 
 /* Public includes ------------------------------------------------------- */
 
-/* ---- General ---- */ 
+/* ---- General ---- */
 #include <chrono>
 #include <future>
 #include <string>
 
-/* ---- ROS2 core ---- */ 
+/* ---- ROS2 core ---- */
 #include <rclcpp/rclcpp.hpp>
 
-/* ---- Service interfaces ---- */ 
+/* ---- Service interfaces ---- */
 #include <std_srvs/srv/set_bool.hpp>
 
 
@@ -41,12 +41,18 @@ class Px4CommanderClient
 {
 public:
 
+    // --------------------------------------------
+    //   CONSTRUCTOR / DESTRUCTOR
+    // --------------------------------------------
 
     /**
      * @brief Construct a new Px4CommanderClient
      *
-     * @param node         Shared pointer to the caller's ROS 2 node
-     * @param namespace_   ROS 2 namespace prefix of the commander node (default: "")
+     * An internal dedicated node is created to own the service clients,
+     * so the caller's node is never added to a second executor.
+     *
+     * @param node         Shared pointer to the caller's ROS 2 node (used for logging only)
+     * @param namespace_   ROS 2 namespace prefix of the commander node (default: "px4_commander")
      * @param timeout_sec  Time (seconds) to wait for each service response (default: 5)
      */
     explicit Px4CommanderClient(
@@ -92,15 +98,25 @@ public:
     CommandResult engage_land_mode();
 
     /**
-     * @brief Enable or disable continuous trajectory setpoint publishing
+     * @brief Enable continuous trajectory setpoint publishing
      *
-     * When enabled, the commander node publishes velocity-based offboard
-     * control mode and trajectory setpoints every 100 ms (heartbeat).
+     * Publishes velocity-based offboard control mode and trajectory 
+     * setpoints every 100 ms (heartbeat).
      *
-     * @param enable  True to start publishing, false to stop
      * @return CommandResult with success flag and descriptive message
      */
-    CommandResult set_trajectory_setpoint_publishing(bool enable);
+    CommandResult enable_trajectory_setpoint();
+
+
+    /**
+     * @brief Disable continuous trajectory setpoint publishing
+     *
+     * Stops publishing velocity-based offboard control mode and trajectory 
+     * setpoints.
+     *
+     * @return CommandResult with success flag and descriptive message
+     */
+    CommandResult disable_trajectory_setpoint();
 
 
 private:
@@ -112,26 +128,30 @@ private:
     /**
      * @brief Build the fully-qualified service name with optional namespace prefix
      * @param service_name  Bare service name (e.g. "arm")
-     * @return Fully-qualified name (e.g. "/my_ns/arm")
+     * @return Fully-qualified name (e.g. "px4_commander/arm")
      */
-    std::string full_name(const std::string& service_name) const;
+    std::string _full_name(const std::string& service_name) const;
 
     /**
-     * @brief Create a SetBool service client for the given service name
-     * @param service_name The base name of the service
+     * @brief Create a SetBool service client on the internal client node
+     * @param service_name  Bare service name
      * @return The service client
      */
     rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr
-    create_client(const std::string& service_name);
+    _create_client(const std::string& service_name);
 
     /**
      * @brief Send a SetBool request and block until response or timeout
-     * @param client The service client
-     * @param service_name The base name of the service
-     * @param data The boolean data to send with the request
-     * @return CommandResult with success status and message
+     *
+     * Uses a temporary SingleThreadedExecutor on the internal client node,
+     * so the caller's node executor is never touched.
+     *
+     * @param client        Service client to use
+     * @param service_name  Bare service name (used in log messages)
+     * @param data          Value of the request data field
+     * @return CommandResult with success flag and descriptive message
      */
-    CommandResult call(
+    CommandResult _call(
         rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr& client,
         const std::string& service_name,
         bool data
@@ -142,8 +162,13 @@ private:
     //   PRIVATE MEMBERS
     // --------------------------------------------
 
+    /* ---- Caller node — used for logging only ---- */
     rclcpp::Node::SharedPtr node_;
-    std::string namespace_;
+
+    /* ---- Internal node — owns all service clients ---- */
+    rclcpp::Node::SharedPtr client_node_;
+
+    std::string                   namespace_;
     std::chrono::duration<double> timeout_;
 
     /* ---- Service clients ---- */
@@ -154,9 +179,9 @@ private:
     rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr cli_setpoint_;
 
     /* ---- Service names ---- */
-    static constexpr const char* SVC_ARM                         = "arm";
-    static constexpr const char* SVC_DISARM                      = "disarm";
-    static constexpr const char* SVC_ENGAGE_OFFBOARD_MODE        = "engage_offboard_mode";
-    static constexpr const char* SVC_ENGAGE_LAND_MODE            = "engage_land_mode";
-    static constexpr const char* SVC_PUBLISH_TRAJECTORY_SETPOINT = "publish_trajectory_setpoint";
+    static constexpr const char* _SVC_ARM                         = "arm";
+    static constexpr const char* _SVC_DISARM                      = "disarm";
+    static constexpr const char* _SVC_ENGAGE_OFFBOARD_MODE        = "engage_offboard_mode";
+    static constexpr const char* _SVC_ENGAGE_LAND_MODE            = "engage_land_mode";
+    static constexpr const char* _SVC_PUBLISH_TRAJECTORY_SETPOINT = "publish_trajectory_setpoint";
 };

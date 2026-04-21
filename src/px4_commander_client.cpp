@@ -11,6 +11,8 @@
 
 #include "px4_commander/px4_commander_client.hpp"
 
+#include <rclcpp/executors/single_threaded_executor.hpp>
+
 
 /* Namespaces ------------------------------------------------------------ */
 
@@ -34,11 +36,21 @@ Px4CommanderClient::Px4CommanderClient(
   namespace_(namespace_),
   timeout_(std::chrono::duration<double>(timeout_sec))
 {
-    cli_arm_      = this->create_client(SVC_ARM);
-    cli_disarm_   = this->create_client(SVC_DISARM);
-    cli_offboard_ = this->create_client(SVC_ENGAGE_OFFBOARD_MODE);
-    cli_land_     = this->create_client(SVC_ENGAGE_LAND_MODE);
-    cli_setpoint_ = this->create_client(SVC_PUBLISH_TRAJECTORY_SETPOINT);
+    /* 
+     * Create a dedicated internal node to own the service clients.
+     * This prevents the caller's node from being added to a second executor
+     * when spin_until_future_complete is called inside call(). 
+     */
+    client_node_ = std::make_shared<rclcpp::Node>(
+        std::string(node->get_name()) + "_commander_client"
+    );
+
+    // Create all clients
+    cli_arm_      = this->_create_client(_SVC_ARM);
+    cli_disarm_   = this->_create_client(_SVC_DISARM);
+    cli_offboard_ = this->_create_client(_SVC_ENGAGE_OFFBOARD_MODE);
+    cli_land_     = this->_create_client(_SVC_ENGAGE_LAND_MODE);
+    cli_setpoint_ = this->_create_client(_SVC_PUBLISH_TRAJECTORY_SETPOINT);
 
     RCLCPP_INFO(node_->get_logger(), "Px4CommanderClient initialized");
 }
@@ -51,10 +63,8 @@ Px4CommanderClient::Px4CommanderClient(
 
 /**
  * @brief Build the fully-qualified service name with optional namespace prefix
- * @param service_name  Bare service name (e.g. "arm")
- * @return Fully-qualified name (e.g. "/my_ns/arm")
  */
-std::string Px4CommanderClient::full_name(const std::string& service_name) const
+std::string Px4CommanderClient::_full_name(const std::string& service_name) const
 {
     if (namespace_.empty())
     {
@@ -66,25 +76,19 @@ std::string Px4CommanderClient::full_name(const std::string& service_name) const
 
 
 /**
- * @brief Create a SetBool service client for the given service name
- * @param service_name The base name of the service
- * @return The service client
+ * @brief Create a SetBool service client on the internal client node
  */
 rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr
-Px4CommanderClient::create_client(const std::string& service_name)
+Px4CommanderClient::_create_client(const std::string& service_name)
 {
-    return node_->create_client<std_srvs::srv::SetBool>(full_name(service_name));
+    return client_node_->create_client<std_srvs::srv::SetBool>(full_name(service_name));
 }
 
 
 /**
  * @brief Send a SetBool request and block until response or timeout
- * @param client The service client
- * @param service_name The base name of the service
- * @param data The boolean data to send with the request
- * @return CommandResult with success status and message
  */
-CommandResult Px4CommanderClient::call(
+CommandResult Px4CommanderClient::_call(
     rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr& client,
     const std::string& service_name,
     bool data)
@@ -92,7 +96,7 @@ CommandResult Px4CommanderClient::call(
     // Wait for service to become available
     if (!client->wait_for_service(timeout_))
     {
-        const auto msg = "Service '" + full_name(service_name) + "' unavailable";
+        const auto msg = "Service '" + this->_full_name(service_name) + "' unavailable";
         RCLCPP_ERROR(node_->get_logger(), "%s", msg.c_str());
         return {false, msg};
     }
@@ -103,16 +107,17 @@ CommandResult Px4CommanderClient::call(
 
     auto future = client->async_send_request(request);
 
-    // Block until response or timeout
-    const auto status = rclcpp::spin_until_future_complete(
-        node_,
-        future,
-        timeout_
-    );
+    // Spin only the internal client node — the caller's node is never touched
+    rclcpp::executors::SingleThreadedExecutor executor;
+    executor.add_node(client_node_);
+
+    const auto status = executor.spin_until_future_complete(future, timeout_);
+
+    executor.remove_node(client_node_);
 
     if (status != rclcpp::FutureReturnCode::SUCCESS)
     {
-        const auto msg = "No response from service '" + full_name(service_name) + "' (timeout)";
+        const auto msg = "No response from service '" + this->_full_name(service_name) + "' (timeout)";
         RCLCPP_ERROR(node_->get_logger(), "%s", msg.c_str());
         return {false, msg};
     }
@@ -133,7 +138,7 @@ CommandResult Px4CommanderClient::call(
 CommandResult Px4CommanderClient::arm()
 {
     RCLCPP_INFO(node_->get_logger(), "Requesting ARM...");
-    return call(cli_arm_, SVC_ARM, true);
+    return this->_call(cli_arm_, SVC_ARM, true);
 }
 
 
@@ -143,7 +148,7 @@ CommandResult Px4CommanderClient::arm()
 CommandResult Px4CommanderClient::disarm()
 {
     RCLCPP_INFO(node_->get_logger(), "Requesting DISARM...");
-    return call(cli_disarm_, SVC_DISARM, true);
+    return this->_call(cli_disarm_, SVC_DISARM, true);
 }
 
 
@@ -153,7 +158,7 @@ CommandResult Px4CommanderClient::disarm()
 CommandResult Px4CommanderClient::engage_offboard_mode()
 {
     RCLCPP_INFO(node_->get_logger(), "Requesting OFFBOARD mode...");
-    return call(cli_offboard_, SVC_ENGAGE_OFFBOARD_MODE, true);
+    return this->_call(cli_offboard_, SVC_ENGAGE_OFFBOARD_MODE, true);
 }
 
 
@@ -163,16 +168,25 @@ CommandResult Px4CommanderClient::engage_offboard_mode()
 CommandResult Px4CommanderClient::engage_land_mode()
 {
     RCLCPP_INFO(node_->get_logger(), "Requesting LAND mode...");
-    return call(cli_land_, SVC_ENGAGE_LAND_MODE, true);
+    return this->_call(cli_land_, SVC_ENGAGE_LAND_MODE, true);
 }
 
 
 /**
- * @brief Enable or disable continuous trajectory setpoint publishing
+ * @brief Enable continuous trajectory setpoint publishing
  */
-CommandResult Px4CommanderClient::set_trajectory_setpoint_publishing(bool enable)
+CommandResult Px4CommanderClient::enable_trajectory_setpoint()
 {
-    const char* action = enable ? "Enabling" : "Disabling";
-    RCLCPP_INFO(node_->get_logger(), "%s trajectory setpoint publishing...", action);
-    return call(cli_setpoint_, SVC_PUBLISH_TRAJECTORY_SETPOINT, enable);
+    RCLCPP_INFO(node_->get_logger(), "Enabling trajectory setpoint...");
+    return this->_call(cli_setpoint_, SVC_PUBLISH_TRAJECTORY_SETPOINT, true);
+}
+
+
+/**
+ * @brief Disable continuous trajectory setpoint publishing
+ */
+CommandResult Px4CommanderClient::disable_trajectory_setpoint()
+{
+    RCLCPP_INFO(node_->get_logger(), "Disabling trajectory setpoint...");
+    return this->_call(cli_setpoint_, SVC_PUBLISH_TRAJECTORY_SETPOINT, false);
 }

@@ -1,35 +1,3 @@
-/****************************************************************************
- *
- * Copyright 2026 Thiago Marques de Oliveira
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the copyright holder nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
- * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- ****************************************************************************/
-
 /**
  * @brief Example state machine node: engage Offboard mode then arm the vehicle
  * @file offboard_arm_example.cpp
@@ -87,9 +55,9 @@ public:
     : Node("offboard_arm_example_node"),
       state_(State::IDLE)
     {
-        commander_ = std::make_shared<Px4CommanderClient>(
-            this->shared_from_this()
-        );
+        // NOTE: commander_ is intentionally NOT initialized here.
+        // shared_from_this() is only valid after make_shared() completes,
+        // i.e. after the constructor returns. Call init() from main().
 
         // Tick the state machine at 1 Hz
         timer_ = this->create_wall_timer(
@@ -98,6 +66,24 @@ public:
         );
 
         RCLCPP_INFO(this->get_logger(), "Node started — initial state: IDLE");
+    }
+
+
+    // --------------------------------------------
+    //   POST-CONSTRUCTION INITIALIZATION
+    // --------------------------------------------
+
+    /**
+     * @brief Initialize members that require shared_from_this().
+     *
+     * Must be called from main() immediately after make_shared<OffboardArmNode>(),
+     * once the shared_ptr is fully constructed.
+     */
+    void init()
+    {
+        commander_ = std::make_shared<Px4CommanderClient>(
+            this->shared_from_this()
+        );
     }
 
 
@@ -226,7 +212,7 @@ private:
     {
         RCLCPP_INFO(
             this->get_logger(),
-            "State transition: %s → %s",
+            "State transition: %s -> %s",
             state_to_string(state_),
             state_to_string(next)
         );
@@ -271,7 +257,10 @@ int main(int argc, char** argv)
 {
     rclcpp::init(argc, argv);
 
+    // make_shared must complete before init() is called,
+    // so that shared_from_this() inside init() is valid
     auto node = std::make_shared<OffboardArmNode>();
+    node->init();
 
     rclcpp::spin(node);
     rclcpp::shutdown();

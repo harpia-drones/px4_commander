@@ -13,15 +13,15 @@ def generate_launch_description():
         'params.yaml',
     )
 
-    px4_commander_node = Node(
+    px4_commander_server = Node(
         package='px4_commander',
-        executable='px4_commander_node',
-        name='px4_commander_node',
+        executable='px4_commander_server',
+        name='px4_commander_server',
         namespace='px4_commander',
         output='screen',
         parameters=[{'config_file': params_file}],
     )
 
-    ld.add_action(px4_commander_node)
+    ld.add_action(px4_commander_server)
 
     return ld

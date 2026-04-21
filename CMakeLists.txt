@@ -51,6 +51,48 @@ install(
 )
 
 
+# ============================
+#   example01 (cpp)
+# ============================
+
+add_executable(example01
+  examples/cpp/example01.cpp
+)
+
+target_include_directories(example01
+  PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/px4_commander>
+    $<INSTALL_INTERFACE:include/px4_commander>
+)
+
+ament_target_dependencies(example01
+  rclcpp
+  std_srvs
+  px4_msgs
+)
+
+target_link_libraries(example01
+  px4_commander_client
+)
+
+install(
+  TARGETS
+    example01
+  DESTINATION 
+    lib/${PROJECT_NAME}
+)
+
+# ============================
+#   example01 (py)
+# ============================
+
+install(
+  PROGRAMS
+    examples/python/example01.py
+  DESTINATION 
+    lib/${PROJECT_NAME}
+)
+
 # ---- Launch --------------------------------------------------- 
 
 install(
@@ -64,7 +106,7 @@ install(
 # ---- APIs ----------------------------------------------------- 
 
 # ============================
-#   px4_commander_client
+#   px4_commander_client (cpp)
 # ============================
 
 # Declare shared library
@@ -109,10 +151,12 @@ ament_export_targets(px4_commander_clientTargets HAS_LIBRARY_TARGET)
 ament_export_dependencies(rclcpp std_srvs)
 
 
-# # ---- Python API ------------------------------------------------
+# ============================
+#   px4_commander_client (py)
+# ============================
 
-# ament_python_install_package(api
-#   PACKAGE_DIR api
-# )
+ament_python_install_package(px4_commander
+  PACKAGE_DIR px4_commander
+)
 
 ament_package()

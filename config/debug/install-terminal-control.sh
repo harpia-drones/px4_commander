@@ -57,11 +57,11 @@ disarm() {
 }
 
 offboard() {
-    ros2 service call /px4_commander/offboard std_srvs/srv/SetBool "data: true"  
+    ros2 service call /px4_commander/engage_offboard_mode std_srvs/srv/SetBool "data: true"  
 }
 
 land() {
-    ros2 service call /px4_commander/land std_srvs/srv/SetBool "data: true"  
+    ros2 service call /px4_commander/engage_land_mode std_srvs/srv/SetBool "data: true"  
 }
 EOF
 

@@ -165,7 +165,7 @@ ros2 run px4_commander example01      # C++
 Fluxo de estados:
 
 ```
-IDLE ──► ENGAGE_OFFBOARD ──► ARM ──► FLYING
+IDLE ──► ENGAGE_OFFBOARD ──► ARM ──► FINISHED
                 │                      
                 └──► ERROR (em qualquer falha)
 ```

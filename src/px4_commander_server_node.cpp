@@ -34,7 +34,7 @@
 
 /**
  * @brief PX4 commander node for setting navigation and arming states
- * @file px4_commander_server.cpp
+ * @file px4_commander_server_node.cpp
  *
  * @author Thiago Marques de Oliveira
  * @date April, 2026
@@ -44,7 +44,7 @@
 
 /* Private includes ------------------------------------------------------ */
 
-#include "px4_commander/px4_commander_server.hpp"
+#include "px4_commander/px4_commander_server_node.hpp"
 
 
 /* Namespaces ------------------------------------------------------------ */
@@ -54,7 +54,7 @@ using namespace std::placeholders;
 using namespace px4_msgs::msg;
 
 
-/* Px4CommanderServer class ------------------------------------------ */
+/* Px4CommanderServerNode class ------------------------------------------ */
 
 
 // --------------------------------------------
@@ -62,7 +62,7 @@ using namespace px4_msgs::msg;
 // --------------------------------------------
 
 
-Px4CommanderServer::Px4CommanderServer(const std::string node_name) 
+Px4CommanderServerNode::Px4CommanderServerNode(const std::string node_name) 
 : Node(node_name)
 {
     // --------------------------------------------
@@ -106,7 +106,7 @@ Px4CommanderServer::Px4CommanderServer(const std::string node_name)
 
     send_heartbeat_signal_timer_ = this->create_wall_timer(
         100ms, 
-        std::bind(&Px4CommanderServer::send_heartbeat_signal, this),
+        std::bind(&Px4CommanderServerNode::send_heartbeat_signal, this),
         control_group_
     );
 
@@ -155,35 +155,35 @@ Px4CommanderServer::Px4CommanderServer(const std::string node_name)
 
     this->arm_service_ = this->create_service<std_srvs::srv::SetBool>(
         "arm",
-        std::bind(&Px4CommanderServer::arm_service_callback, this, _1, _2),
+        std::bind(&Px4CommanderServerNode::arm_service_callback, this, _1, _2),
         rclcpp::QoS(rclcpp::ServicesQoS()),
         service_group_
     );  
 
     this->disarm_service_ = this->create_service<std_srvs::srv::SetBool>(
         "disarm",
-        std::bind(&Px4CommanderServer::disarm_service_callback, this, _1, _2),
+        std::bind(&Px4CommanderServerNode::disarm_service_callback, this, _1, _2),
         rclcpp::QoS(rclcpp::ServicesQoS()),
         service_group_
     );
 
     this->engage_land_mode_service_ = this->create_service<std_srvs::srv::SetBool>(
         "engage_land_mode",
-        std::bind(&Px4CommanderServer::engage_land_mode_service_callback, this, _1, _2),
+        std::bind(&Px4CommanderServerNode::engage_land_mode_service_callback, this, _1, _2),
         rclcpp::QoS(rclcpp::ServicesQoS()),
         service_group_
     );
 
     this->engage_offboard_mode_service_ = this->create_service<std_srvs::srv::SetBool>(
         "engage_offboard_mode",
-        std::bind(&Px4CommanderServer::engage_offboard_mode_service_callback, this, _1, _2),
+        std::bind(&Px4CommanderServerNode::engage_offboard_mode_service_callback, this, _1, _2),
         rclcpp::QoS(rclcpp::ServicesQoS()),
         service_group_
     );
 
     this->publish_trajectory_setpoint_service_ = this->create_service<std_srvs::srv::SetBool>(
         "publish_trajectory_setpoint",
-        std::bind(&Px4CommanderServer::publish_trajectory_setpoint_service_callback, this, _1, _2),
+        std::bind(&Px4CommanderServerNode::publish_trajectory_setpoint_service_callback, this, _1, _2),
         rclcpp::QoS(rclcpp::ServicesQoS()),
         service_group_
     );
@@ -202,7 +202,7 @@ Px4CommanderServer::Px4CommanderServer(const std::string node_name)
  * @brief Publish vehicle commands
  * @param args VehicleCommand struct with command and parameters 1-7
  */
-void Px4CommanderServer::publish_vehicle_command(const VehicleCommandArgs& args)
+void Px4CommanderServerNode::publish_vehicle_command(const VehicleCommandArgs& args)
 {
     VehicleCommand msg{};
     msg.param1 = args.param1.value_or(0.0f);
@@ -226,7 +226,7 @@ void Px4CommanderServer::publish_vehicle_command(const VehicleCommandArgs& args)
 /**
  * @brief Send a command to arm the vehicle
  */
-void Px4CommanderServer::arm()
+void Px4CommanderServerNode::arm()
 {
 	this->publish_vehicle_command({
         .command = VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM,
@@ -240,7 +240,7 @@ void Px4CommanderServer::arm()
 /**
  * @brief Send a command to disarm the vehicle
  */
-void Px4CommanderServer::disarm()
+void Px4CommanderServerNode::disarm()
 {
 	this->publish_vehicle_command({
         .command = VehicleCommand::VEHICLE_CMD_COMPONENT_ARM_DISARM,
@@ -254,7 +254,7 @@ void Px4CommanderServer::disarm()
 /**
  * @brief Send a command to land the vehicle
  */
-void Px4CommanderServer::land()
+void Px4CommanderServerNode::land()
 {
     this->publish_vehicle_command({
         .command = VehicleCommand::VEHICLE_CMD_NAV_LAND
@@ -267,7 +267,7 @@ void Px4CommanderServer::land()
 /**
  * @brief Send a command to engage offboard mode
  */
-void Px4CommanderServer::engage_offboard_mode()
+void Px4CommanderServerNode::engage_offboard_mode()
 {
     this->publish_vehicle_command({
         .command = VehicleCommand::VEHICLE_CMD_DO_SET_MODE,
@@ -282,7 +282,7 @@ void Px4CommanderServer::engage_offboard_mode()
 /**
  * @brief Publish the offboard control mode to be controlled by POSITION
  */
-void Px4CommanderServer::publish_offboard_control_mode_by_position()
+void Px4CommanderServerNode::publish_offboard_control_mode_by_position()
 {
     OffboardControlMode msg{};
 	msg.position = true;
@@ -298,7 +298,7 @@ void Px4CommanderServer::publish_offboard_control_mode_by_position()
 /**
  * @brief Publish the offboard control mode to be controlled by VELOCITY
  */
-void Px4CommanderServer::publish_offboard_control_mode_by_velocity()
+void Px4CommanderServerNode::publish_offboard_control_mode_by_velocity()
 {
     OffboardControlMode msg{};
 	msg.position = false;
@@ -314,7 +314,7 @@ void Px4CommanderServer::publish_offboard_control_mode_by_velocity()
 /**
 * @brief Publish a trajectory setpoint by POSITION
 */
-void Px4CommanderServer::publish_trajectory_setpoint_by_position()
+void Px4CommanderServerNode::publish_trajectory_setpoint_by_position()
 {
     TrajectorySetpoint msg{};
     msg.position = {0.0f, 0.0f, -1.0f};
@@ -331,7 +331,7 @@ void Px4CommanderServer::publish_trajectory_setpoint_by_position()
 /**
 * @brief Publish a trajectory setpoint by VELOCITY
 */
-void Px4CommanderServer::publish_trajectory_setpoint_by_velocity()
+void Px4CommanderServerNode::publish_trajectory_setpoint_by_velocity()
 {
     TrajectorySetpoint msg{};
     msg.position = {NAN, NAN, NAN};
@@ -353,7 +353,7 @@ void Px4CommanderServer::publish_trajectory_setpoint_by_velocity()
 /** 
 * @brief Menage trajectory setpoint publishing
 */
-void Px4CommanderServer::publish_trajectory_setpoint_service_callback(
+void Px4CommanderServerNode::publish_trajectory_setpoint_service_callback(
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
     std::shared_ptr<std_srvs::srv::SetBool::Response> response)
 {
@@ -377,7 +377,7 @@ void Px4CommanderServer::publish_trajectory_setpoint_service_callback(
 /** 
 * @brief Arm the vehicle
 */
-void Px4CommanderServer::arm_service_callback(
+void Px4CommanderServerNode::arm_service_callback(
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
     std::shared_ptr<std_srvs::srv::SetBool::Response> response)
 {
@@ -420,7 +420,7 @@ void Px4CommanderServer::arm_service_callback(
 /** 
 * @brief Disarm the vehicle
 */
-void Px4CommanderServer::disarm_service_callback(
+void Px4CommanderServerNode::disarm_service_callback(
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
     std::shared_ptr<std_srvs::srv::SetBool::Response> response)
 {
@@ -463,7 +463,7 @@ void Px4CommanderServer::disarm_service_callback(
 /** 
 * @brief Engage Offboard mode
 */
-void Px4CommanderServer::engage_offboard_mode_service_callback(
+void Px4CommanderServerNode::engage_offboard_mode_service_callback(
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
     std::shared_ptr<std_srvs::srv::SetBool::Response> response)
 {
@@ -519,7 +519,7 @@ void Px4CommanderServer::engage_offboard_mode_service_callback(
 /** 
 * @brief Engage Land mode
 */
-void Px4CommanderServer::engage_land_mode_service_callback(
+void Px4CommanderServerNode::engage_land_mode_service_callback(
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
     std::shared_ptr<std_srvs::srv::SetBool::Response> response)
 {
@@ -568,7 +568,7 @@ void Px4CommanderServer::engage_land_mode_service_callback(
 /**
  * @brief Send heartbeat signal to keep connection
  */
-void Px4CommanderServer::send_heartbeat_signal()
+void Px4CommanderServerNode::send_heartbeat_signal()
 {
     if (publish_trajectory_setpoint_.load(std::memory_order_relaxed))
     {   
@@ -591,7 +591,7 @@ int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<Px4CommanderServer>("px4_commander_server");
+  auto node = std::make_shared<Px4CommanderServerNode>("px4_commander_server");
 
   rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), 2);
   executor.add_node(node);

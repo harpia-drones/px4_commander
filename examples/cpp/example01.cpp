@@ -1,25 +1,28 @@
 /**
  * @brief Example state machine node: engage Offboard mode then arm the vehicle
- * @file offboard_arm_example.cpp
- *
- * State flow:
- *
- *   IDLE ──► ENGAGE_OFFBOARD ──► ARM ──► FLYING ──► ERROR (on any failure)
+ * @file example01.cpp
  *
  * @author Thiago Marques de Oliveira
  * @date April, 2026
  */
 
+/**
+ * State flow:
+ *   IDLE -> ENGAGE_OFFBOARD -> ARM -> FINISHED
+ */
 
-/* Private includes ------------------------------------------------------ */
 
-#include "px4_commander/px4_commander_client.hpp"
-
-#include <rclcpp/rclcpp.hpp>
+/* Includes -------------------------------------------------------------- */
 
 #include <chrono>
 #include <functional>
 #include <string>
+
+// ROS 2 Core
+#include <rclcpp/rclcpp.hpp>
+
+// PX4 Commander
+#include "px4_commander/px4_commander_client.hpp"
 
 
 /* Namespaces ------------------------------------------------------------ */
@@ -42,8 +45,7 @@ public:
         IDLE,
         ENGAGE_OFFBOARD,
         ARM,
-        FLYING,
-        ERROR
+        FINISHED
     };
 
 
@@ -62,7 +64,7 @@ public:
         // Tick the state machine at 1 Hz
         timer_ = this->create_wall_timer(
             1s,
-            std::bind(&OffboardArmNode::tick, this)
+            std::bind(&OffboardArmNode::state_machine_loop, this)
         );
 
         RCLCPP_INFO(this->get_logger(), "Node started — initial state: IDLE");
@@ -90,34 +92,34 @@ public:
 private:
 
     // --------------------------------------------
-    //   STATE MACHINE TICK
+    //   STATE MACHINE LOOP
     // --------------------------------------------
 
     /**
      * @brief Advance the state machine by one step
      */
-    void tick()
+    void state_machine_loop()
     {
         switch (state_)
         {
             case State::IDLE:
-                on_idle();
+                this->_on_idle();
                 break;
 
             case State::ENGAGE_OFFBOARD:
-                on_engage_offboard();
+                this->_on_engage_offboard();
                 break;
 
             case State::ARM:
-                on_arm();
+                this->_on_arm();
                 break;
 
-            case State::FLYING:
-                on_flying();
+            case State::FINISHED:
+                this->_on_finished();
                 break;
 
             case State::ERROR:
-                on_error();
+                this->_on_error();
                 break;
         }
     }
@@ -128,18 +130,18 @@ private:
     // --------------------------------------------
 
     /**
-     * @brief IDLE — entry point, immediately transitions to ENGAGE_OFFBOARD
+     * @brief IDLE - entry point, immediately transitions to ENGAGE_OFFBOARD
      */
-    void on_idle()
+    void _on_idle()
     {
         RCLCPP_INFO(this->get_logger(), "[IDLE] Starting sequence...");
-        transition_to(State::ENGAGE_OFFBOARD);
+        this->_transition_to(State::ENGAGE_OFFBOARD);
     }
 
     /**
-     * @brief ENGAGE_OFFBOARD — send offboard mode command and wait for confirmation
+     * @brief ENGAGE_OFFBOARD - send offboard mode command and wait for confirmation
      */
-    void on_engage_offboard()
+    void _on_engage_offboard()
     {
         RCLCPP_INFO(this->get_logger(), "[ENGAGE_OFFBOARD] Engaging offboard mode...");
 
@@ -148,19 +150,19 @@ private:
         if (success)
         {
             RCLCPP_INFO(this->get_logger(), "[ENGAGE_OFFBOARD] %s", message.c_str());
-            transition_to(State::ARM);
+            this->_transition_to(State::ARM);
         }
         else
         {
             RCLCPP_ERROR(this->get_logger(), "[ENGAGE_OFFBOARD] %s", message.c_str());
-            transition_to(State::ERROR);
+            this->_transition_to(State::ERROR);
         }
     }
 
     /**
-     * @brief ARM — arm the vehicle after offboard mode is confirmed
+     * @brief ARM - arm the vehicle after offboard mode is confirmed
      */
-    void on_arm()
+    void _on_arm()
     {
         RCLCPP_INFO(this->get_logger(), "[ARM] Arming vehicle...");
 
@@ -169,33 +171,33 @@ private:
         if (success)
         {
             RCLCPP_INFO(this->get_logger(), "[ARM] %s", message.c_str());
-            transition_to(State::FLYING);
+            this->_transition_to(State::FINISHED);
         }
         else
         {
             RCLCPP_ERROR(this->get_logger(), "[ARM] %s", message.c_str());
-            transition_to(State::ERROR);
+            this->_transition_to(State::ERROR);
         }
     }
 
     /**
-     * @brief FLYING — vehicle is armed and in offboard mode, ready for control
+     * @brief FINISHED - vehicle is armed and in offboard mode, ready for control
      */
-    void on_flying()
+    void _on_finished()
     {
-        RCLCPP_INFO(this->get_logger(), "[FLYING] Vehicle is flying in offboard mode");
+        RCLCPP_INFO(this->get_logger(), "[FINISHED] Mission has finished");
 
         // Stop the tick timer — nothing else to do in this example
-        timer_->cancel();
+        this->timer_->cancel();
     }
 
     /**
-     * @brief ERROR — unrecoverable failure, shut down the node
+     * @brief ERROR - unrecoverable failure, shut down the node
      */
-    void on_error()
+    void _on_error()
     {
         RCLCPP_ERROR(this->get_logger(), "[ERROR] Sequence failed — shutting down");
-        timer_->cancel();
+        this->timer_->cancel();
         rclcpp::shutdown();
     }
 
@@ -208,16 +210,16 @@ private:
      * @brief Log and perform a state transition
      * @param next  Target state
      */
-    void transition_to(State next)
+    void _transition_to(State next)
     {
         RCLCPP_INFO(
             this->get_logger(),
             "State transition: %s -> %s",
-            state_to_string(state_),
+            state_to_string(this->state_),
             state_to_string(next)
         );
 
-        state_ = next;
+        this->state_ = next;
     }
 
     /**
@@ -232,7 +234,7 @@ private:
             case State::IDLE:             return "IDLE";
             case State::ENGAGE_OFFBOARD:  return "ENGAGE_OFFBOARD";
             case State::ARM:              return "ARM";
-            case State::FLYING:           return "FLYING";
+            case State::FINISHED:         return "FINISHED";
             case State::ERROR:            return "ERROR";
             default:                      return "UNKNOWN";
         }

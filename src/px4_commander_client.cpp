@@ -46,11 +46,11 @@ Px4CommanderClient::Px4CommanderClient(
     );
 
     // Create all clients
-    cli_arm_      = this->_create_client(_SVC_ARM);
-    cli_disarm_   = this->_create_client(_SVC_DISARM);
-    cli_offboard_ = this->_create_client(_SVC_ENGAGE_OFFBOARD_MODE);
-    cli_land_     = this->_create_client(_SVC_ENGAGE_LAND_MODE);
-    cli_setpoint_ = this->_create_client(_SVC_PUBLISH_TRAJECTORY_SETPOINT);
+    this->cli_arm_      = this->_create_client(_SVC_ARM);
+    this->cli_disarm_   = this->_create_client(_SVC_DISARM);
+    this->cli_offboard_ = this->_create_client(_SVC_ENGAGE_OFFBOARD_MODE);
+    this->cli_land_     = this->_create_client(_SVC_ENGAGE_LAND_MODE);
+    this->cli_setpoint_ = this->_create_client(_SVC_PUBLISH_TRAJECTORY_SETPOINT);
 
     RCLCPP_INFO(node_->get_logger(), "Px4CommanderClient initialized");
 }
@@ -81,7 +81,7 @@ std::string Px4CommanderClient::_full_name(const std::string& service_name) cons
 rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr
 Px4CommanderClient::_create_client(const std::string& service_name)
 {
-    return client_node_->create_client<std_srvs::srv::SetBool>(full_name(service_name));
+    return client_node_->create_client<std_srvs::srv::SetBool>(this->_full_name(service_name));
 }
 
 
@@ -138,7 +138,7 @@ CommandResult Px4CommanderClient::_call(
 CommandResult Px4CommanderClient::arm()
 {
     RCLCPP_INFO(node_->get_logger(), "Requesting ARM...");
-    return this->_call(cli_arm_, SVC_ARM, true);
+    return this->_call(this->cli_arm_, _SVC_ARM, true);
 }
 
 
@@ -148,7 +148,7 @@ CommandResult Px4CommanderClient::arm()
 CommandResult Px4CommanderClient::disarm()
 {
     RCLCPP_INFO(node_->get_logger(), "Requesting DISARM...");
-    return this->_call(cli_disarm_, SVC_DISARM, true);
+    return this->_call(this->cli_disarm_, _SVC_DISARM, true);
 }
 
 
@@ -158,7 +158,7 @@ CommandResult Px4CommanderClient::disarm()
 CommandResult Px4CommanderClient::engage_offboard_mode()
 {
     RCLCPP_INFO(node_->get_logger(), "Requesting OFFBOARD mode...");
-    return this->_call(cli_offboard_, SVC_ENGAGE_OFFBOARD_MODE, true);
+    return this->_call(this->cli_offboard_, _SVC_ENGAGE_OFFBOARD_MODE, true);
 }
 
 
@@ -168,7 +168,7 @@ CommandResult Px4CommanderClient::engage_offboard_mode()
 CommandResult Px4CommanderClient::engage_land_mode()
 {
     RCLCPP_INFO(node_->get_logger(), "Requesting LAND mode...");
-    return this->_call(cli_land_, SVC_ENGAGE_LAND_MODE, true);
+    return this->_call(this->cli_land_, _SVC_ENGAGE_LAND_MODE, true);
 }
 
 
@@ -178,7 +178,7 @@ CommandResult Px4CommanderClient::engage_land_mode()
 CommandResult Px4CommanderClient::enable_trajectory_setpoint()
 {
     RCLCPP_INFO(node_->get_logger(), "Enabling trajectory setpoint...");
-    return this->_call(cli_setpoint_, SVC_PUBLISH_TRAJECTORY_SETPOINT, true);
+    return this->_call(this->cli_setpoint_, _SVC_PUBLISH_TRAJECTORY_SETPOINT, true);
 }
 
 
@@ -188,5 +188,5 @@ CommandResult Px4CommanderClient::enable_trajectory_setpoint()
 CommandResult Px4CommanderClient::disable_trajectory_setpoint()
 {
     RCLCPP_INFO(node_->get_logger(), "Disabling trajectory setpoint...");
-    return this->_call(cli_setpoint_, SVC_PUBLISH_TRAJECTORY_SETPOINT, false);
+    return this->_call(this->cli_setpoint_, _SVC_PUBLISH_TRAJECTORY_SETPOINT, false);
 }

@@ -100,7 +100,7 @@ struct VehicleCommandArgs
 
 /* Px4CommanderServer class ---------------------------------------------- */
 
-class Px4CommanderServer 
+class Px4CommanderServerNode
 : public rclcpp::Node
 {
 public:

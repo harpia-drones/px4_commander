@@ -141,6 +141,14 @@ private:
     _create_client(const std::string& service_name);
 
     /**
+     * @brief Wait for a service to become available
+     * @param client        Service client to use
+     * @param service_name  Bare service name (used in log messages)
+     * @return CommandResult with success flag and descriptive message
+     */
+    CommandResult _wait_for_service(rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr& client, const std::string& service_name);
+
+    /**
      * @brief Send a SetBool request and block until response or timeout
      *
      * Uses a temporary SingleThreadedExecutor on the internal client node,

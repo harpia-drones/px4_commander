@@ -9,17 +9,12 @@
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <!-- ROS2 -->
+  <!-- Dependencies -->
   <depend>rclcpp</depend>
   <depend>std_srvs</depend>
   <depend>px4_msgs</depend>
 
   <buildtool_depend>ament_cmake_python</buildtool_depend>
-
-  <!-- ROS2 interfaces -->
-  <buildtool_depend>rosidl_default_generators</buildtool_depend>
-  <exec_depend>rosidl_default_runtime</exec_depend>
-  <member_of_group>rosidl_interface_packages</member_of_group>
 
   <export>
     <build_type>ament_cmake</build_type>

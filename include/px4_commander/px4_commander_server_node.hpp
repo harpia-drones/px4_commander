@@ -41,7 +41,8 @@
  */
 
 
-#pragma once 
+#ifndef PX4_COMMANDER_SERVER_NODE__HPP
+#define PX4_COMMANDER_SERVER_NODE__HPP
 
 
 /* Includes -------------------------------------------------------------- */
@@ -69,7 +70,6 @@
 
 // Subscribers
 #include <px4_msgs/msg/vehicle_status.hpp>
-#include <px4_msgs/msg/manual_control_setpoint.hpp>
 
 
 /* ---- Service interfaces ---- */ 
@@ -105,32 +105,36 @@ class Px4CommanderServerNode
 {
 public:
 
-
     /**
-     * @brief Construct a new Px4CommanderServer
-     *
+     * @brief Construct a new Px4CommanderServerNode
      * @param node_name    Name of the commander node
      */
-    explicit Px4CommanderServer(const std::string node_name);
+    explicit Px4CommanderServerNode(const std::string node_name);
 
     // Detructor
-    ~Px4CommanderServer() = default;
+    ~Px4CommanderServerNode() = default;
 
 private:
 
+    // --------------------------------------------
+    //   CLOCK
+    // --------------------------------------------
+
     rclcpp::Clock steady_clock_{RCL_STEADY_TIME};
 
+    
     // --------------------------------------------
     //   BUFFERS
     // --------------------------------------------
 
     /* ---- Vehicle's states  ---- */ 
 
-    // Vehicle status
+    // Arming state
     std::atomic<uint8_t> current_arming_state_{
         px4_msgs::msg::VehicleStatus::ARMING_STATE_DISARMED
     };
 
+    // Nav state
     std::atomic<uint8_t> current_nav_state_{0}; // Manual mode as default
 
     // PX4 synced timestamp
@@ -139,7 +143,7 @@ private:
 
     /* ---- Logic variables ---- */ 
 
-    bool simulation_;
+    bool is_simulation_; // is_simulation ? true : false
 
     rclcpp::Duration pre_offboard_waiting_time_{
         rclcpp::Duration::from_seconds(2.0)  // 2 seconds
@@ -161,11 +165,13 @@ private:
     rclcpp::CallbackGroup::SharedPtr control_group_;
     rclcpp::CallbackGroup::SharedPtr service_group_;
 
+
     // --------------------------------------------
     //   TIMERS
     // --------------------------------------------
 
     rclcpp::TimerBase::SharedPtr send_heartbeat_signal_timer_;
+
 
     // --------------------------------------------
     //   PUBLISHERS
@@ -175,11 +181,13 @@ private:
     rclcpp::Publisher<px4_msgs::msg::TrajectorySetpoint>::SharedPtr trajectory_setpoint_publisher_;
     rclcpp::Publisher<px4_msgs::msg::OffboardControlMode>::SharedPtr offboard_control_mode_publisher_;
 
+
     // --------------------------------------------
     //   SUBSCRIPTIONS
     // --------------------------------------------
 
     rclcpp::Subscription<px4_msgs::msg::VehicleStatus>::SharedPtr vehicle_status_sub_;
+
 
     // --------------------------------------------
     //   SERVICE SERVERS
@@ -190,6 +198,7 @@ private:
     rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr disarm_service_;
     rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr engage_offboard_mode_service_;
     rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr engage_land_mode_service_;
+
 
     // --------------------------------------------
     //   METHODS
@@ -290,3 +299,6 @@ private:
         std::shared_ptr<std_srvs::srv::SetBool::Response> response);
 
 };
+
+
+#endif // PX4_COMMANDER_SERVER_NODE__HPP

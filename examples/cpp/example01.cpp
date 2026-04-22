@@ -45,7 +45,8 @@ public:
         IDLE,
         ENGAGE_OFFBOARD,
         ARM,
-        FINISHED
+        FINISHED,
+        ERROR
     };
 
 

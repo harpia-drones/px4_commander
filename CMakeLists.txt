@@ -28,13 +28,13 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 # ============================
 
 add_executable(px4_commander_server
-  src/px4_commander_server.cpp
+  src/px4_commander_server_node.cpp
 )
 
 target_include_directories(px4_commander_server
   PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/px4_commander>
-    $<INSTALL_INTERFACE:include/px4_commander>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
 
 ament_target_dependencies(px4_commander_server
@@ -61,8 +61,8 @@ add_executable(example01
 
 target_include_directories(example01
   PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/px4_commander>
-    $<INSTALL_INTERFACE:include/px4_commander>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
 
 ament_target_dependencies(example01
@@ -118,8 +118,8 @@ add_library(px4_commander_client
 # Build (to create .so)
 target_include_directories(px4_commander_client 
   PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/px4_commander>
-    $<INSTALL_INTERFACE:include/px4_commander>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
 )
 
 # Link dependencies
@@ -131,7 +131,7 @@ ament_target_dependencies(px4_commander_client
 # Install headers
 install(
   DIRECTORY 
-    include
+    include/
   DESTINATION 
     include
 )

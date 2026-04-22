@@ -10,6 +10,7 @@ def generate_launch_description():
     params_file = os.path.join(
         get_package_share_directory(f'px4_commander'),
         'config',
+        'params',
         'params.yaml',
     )
 

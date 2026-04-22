@@ -66,26 +66,26 @@ Px4CommanderServerNode::Px4CommanderServerNode(const std::string node_name)
 : Node(node_name)
 {
     // --------------------------------------------
-    //   LOAD PARAMETERS
+    //   PARAMETERS
     // --------------------------------------------
+
+    /* ---- Declare parameters ---- */ 
 
     this->declare_parameter("response_timeout", 5);
     this->declare_parameter("pre_offboard_waiting_time", 2.0);
-    this->declare_parameter("simulation", true);
+    this->declare_parameter("is_simulation", true);
+
+    /* ---- Get parameters ---- */ 
 
     long int response_timeout_int;
     double pre_offboard_waiting_time_double;
 
     this->get_parameter("response_timeout", response_timeout_int);
     this->get_parameter("pre_offboard_waiting_time", pre_offboard_waiting_time_double);
-    this->get_parameter("simulation", simulation_);
+    this->get_parameter("is_simulation", this->is_simulation_);
 
     cv_response_timeout_ =  std::chrono::seconds(response_timeout_int);
     pre_offboard_waiting_time_ = rclcpp::Duration::from_seconds(pre_offboard_waiting_time_double);
-
-    RCLCPP_INFO(this->get_logger(), "Response timeout: %ld seconds", response_timeout_int);
-    RCLCPP_INFO(this->get_logger(), "Pre-offboard waiting time: %.2f seconds", pre_offboard_waiting_time_double);
-    RCLCPP_INFO(this->get_logger(), "Simulation: %s", simulation_ ? "true" : "false");
 
     
     // --------------------------------------------
@@ -99,7 +99,8 @@ Px4CommanderServerNode::Px4CommanderServerNode(const std::string node_name)
     /* ---- Subscription group config ---- */ 
     rclcpp::SubscriptionOptions sub_opts;
     sub_opts.callback_group = control_group_;
-                
+
+    
     // --------------------------------------------
     //   TIMERS
     // --------------------------------------------
@@ -109,6 +110,7 @@ Px4CommanderServerNode::Px4CommanderServerNode(const std::string node_name)
         std::bind(&Px4CommanderServerNode::send_heartbeat_signal, this),
         control_group_
     );
+
 
     // --------------------------------------------
     //   PUBLISHERS
@@ -135,7 +137,7 @@ Px4CommanderServerNode::Px4CommanderServerNode(const std::string node_name)
 
     // Vehicle status subscription
     this->vehicle_status_sub_ = this->create_subscription<VehicleStatus>(
-            this->simulation_ ? "/fmu/out/vehicle_status" : "/fmu/out/vehicle_status_v1", 
+            this->is_simulation_ ? "/fmu/out/vehicle_status" : "/fmu/out/vehicle_status_v1", 
             qos,
             [this](const VehicleStatus::ConstSharedPtr vehicle_status)
             {
@@ -191,6 +193,7 @@ Px4CommanderServerNode::Px4CommanderServerNode(const std::string node_name)
 
     RCLCPP_INFO(this->get_logger(), "PX4 Commander node has started");
 }
+
 
 
 // --------------------------------------------
@@ -343,6 +346,7 @@ void Px4CommanderServerNode::publish_trajectory_setpoint_by_velocity()
     msg.timestamp = this->timestamp_.load(std::memory_order_relaxed);
     this->trajectory_setpoint_publisher_->publish(msg);
 }
+
 
 
 // --------------------------------------------
@@ -591,7 +595,7 @@ int main(int argc, char** argv)
 {
   rclcpp::init(argc, argv);
 
-  auto node = std::make_shared<Px4CommanderServerNode>("px4_commander_server");
+  auto node = std::make_shared<Px4CommanderServerNode>("px4_commander_server_node");
 
   rclcpp::executors::MultiThreadedExecutor executor(rclcpp::ExecutorOptions(), 2);
   executor.add_node(node);

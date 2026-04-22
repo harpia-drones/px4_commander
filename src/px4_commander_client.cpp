@@ -86,6 +86,24 @@ Px4CommanderClient::_create_client(const std::string& service_name)
 
 
 /**
+ * @brief Wait for a service to become available
+ */
+CommandResult Px4CommanderClient::_wait_for_service(rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr& client, const std::string& service_name)
+{
+    if (!client->wait_for_service(timeout_))
+    {
+        const auto msg = "Service '" + this->_full_name(service_name) + "' unavailable";
+        RCLCPP_ERROR(node_->get_logger(), "%s", msg.c_str());
+        return {false, msg};
+    }
+    else
+    {
+        return {true, "Service available"};
+    }
+}
+
+
+/**
  * @brief Send a SetBool request and block until response or timeout
  */
 CommandResult Px4CommanderClient::_call(
@@ -94,12 +112,9 @@ CommandResult Px4CommanderClient::_call(
     bool data)
 {
     // Wait for service to become available
-    if (!client->wait_for_service(timeout_))
-    {
-        const auto msg = "Service '" + this->_full_name(service_name) + "' unavailable";
-        RCLCPP_ERROR(node_->get_logger(), "%s", msg.c_str());
-        return {false, msg};
-    }
+    CommandResult wait_result = this->_wait_for_service(client, service_name);
+    if (!wait_result.success)
+        return wait_result;
 
     // Build and send request
     auto request  = std::make_shared<std_srvs::srv::SetBool::Request>();

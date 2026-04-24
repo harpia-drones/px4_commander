@@ -69,12 +69,13 @@ class Px4CommanderClient:
 
     def __init__(
         self,
+        node_name = "px4_commander_client_node",
         namespace: str = "px4_commander",
         timeout_sec: float = 5.0,
     ) -> None:
 
         self.timeout_sec_ = timeout_sec
-        self.ns_ = namespace.rstrip("/")
+        self.ns_ = namespace
 
         # Create a dedicated internal node to own the service clients.
         # This prevents the caller's node from being added to a second executor
@@ -99,14 +100,14 @@ class Px4CommanderClient:
         """
         Build the fully-qualified service name with optional namespace prefix.
         """
-        return f"{self._ns}/{service_name}" if self._ns else service_name
+        return f"/{self.ns_}/{service_name}" if self.ns_ else service_name
 
 
     def _create_client(self, service_name: str):
         """
         Create a SetBool service client on the internal client node.
         """
-        cli = self._node.create_client(SetBool, self._full_name(service_name))
+        cli = self.node_.create_client(SetBool, self._full_name(service_name))
         return cli
 
 
@@ -114,8 +115,8 @@ class Px4CommanderClient:
         """
         Bloqueia até o serviço estar disponível ou timeout.
         """
-        if not cli.wait_for_service(timeout_sec=self._timeout_sec):
-            self._node.get_logger().error(
+        if not cli.wait_for_service(timeout_sec=self.timeout_sec_):
+            self.node_.get_logger().error(
                 f"Service '{self._full_name(service_name)}' unavailable"
             )
             return False
@@ -146,7 +147,7 @@ class Px4CommanderClient:
         future = cli.call_async(req)
 
         # Spin only the internal client node — the caller's node is never touched
-        self._executor.spin_until_future_complete(future, timeout_sec=self._timeout_sec)
+        self.executor_.spin_until_future_complete(future, timeout_sec=self.timeout_sec_)
 
         if future.result() is None:
             return CommandResult(
@@ -165,53 +166,53 @@ class Px4CommanderClient:
         """
         Arm the vehicle.
         """
-        self._node.get_logger().info("Requesting ARM...")
-        return self._call(self._cli_arm, self._SVC_ARM, data=True)
+        self.node_.get_logger().info("Requesting ARM...")
+        return self._call(self.cli_arm_, self._SVC_ARM, data=True)
 
 
     def disarm(self) -> CommandResult:
         """
         Disarm the vehicle.
         """
-        self._node.get_logger().info("Requesting DISARM...")
-        return self._call(self._cli_disarm, self._SVC_DISARM, data=True)
+        self.node_.get_logger().info("Requesting DISARM...")
+        return self._call(self.cli_disarm_, self._SVC_DISARM, data=True)
 
 
     def engage_offboard_mode(self) -> CommandResult:
         """
         Engage Offboard mode.
         """
-        self._node.get_logger().info("Requesting OFFBOARD mode...")
-        return self._call(self._cli_offboard, self._SVC_ENGAGE_OFFBOARD_MODE, data=True)
+        self.node_.get_logger().info("Requesting OFFBOARD mode...")
+        return self._call(self.cli_offboard_, self._SVC_ENGAGE_OFFBOARD_MODE, data=True)
 
 
     def engage_land_mode(self) -> CommandResult:
         """
         Engage automatic landing mode (AUTO_LAND).
         """
-        self._node.get_logger().info("Requesting LAND mode...")
-        return self._call(self._cli_land, self._SVC_ENGAGE_LAND_MODE, data=True)
+        self.node_.get_logger().info("Requesting LAND mode...")
+        return self._call(self.cli_land_, self._SVC_ENGAGE_LAND_MODE, data=True)
 
 
     def enable_trajectory_setpoint(self) -> CommandResult:
         """
         Enable continuous trajectory setpoint publishing.
         """
-        self._node.get_logger().info("Enabling trajectory setpoint...")
-        return self._call(self._cli_setpoint, self._SVC_PUBLISH_TRAJECTORY_SETPOINT, data=True)
+        self.node_.get_logger().info("Enabling trajectory setpoint...")
+        return self._call(self.cli_setpoint_, self._SVC_PUBLISH_TRAJECTORY_SETPOINT, data=True)
 
 
     def disable_trajectory_setpoint(self) -> CommandResult:
         """
         Disable continuous trajectory setpoint publishing.
         """
-        self._node.get_logger().info("Disabling trajectory setpoint...")
-        return self._call(self._cli_setpoint, self._SVC_PUBLISH_TRAJECTORY_SETPOINT, data=False)
+        self.node_.get_logger().info("Disabling trajectory setpoint...")
+        return self._call(self.cli_setpoint_, self._SVC_PUBLISH_TRAJECTORY_SETPOINT, data=False)
 
 
     def destroy(self) -> None:
         """Release the ROS 2 node and executor."""
-        self._node.destroy_node()
+        self.node_.destroy_node()
 
 
 # ---------------------------------------------------------------------------
@@ -233,7 +234,7 @@ if __name__ == "__main__":
 
     for label, fn in steps:
         result = fn()
-        status = "✓" if result.success else "✗"
+        status = "ok" if result.success else "fail"
         print(f"[{status}] {label}: {result.message}")
         if not result.success:
             print(f"    Abortando sequência.")

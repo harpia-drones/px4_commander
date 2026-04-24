@@ -372,7 +372,7 @@ void Px4CommanderServerNode::publish_trajectory_setpoint_service_callback(
     else
     {
         publish_trajectory_setpoint_.store(false, std::memory_order_relaxed);
-        response->success = false;
+        response->success = true;
         response->message = "Trajectory setpoint publishing stopped";
     }
 }
@@ -578,10 +578,12 @@ void Px4CommanderServerNode::send_heartbeat_signal()
     {   
         this->publish_offboard_control_mode_by_velocity();
         this->publish_trajectory_setpoint_by_velocity();
+        // RCLCPP_WARN(this->get_logger(), "Publishing offboard control mode by velocity");
     }
     else
     {
         this->publish_offboard_control_mode_by_position();
+        // RCLCPP_WARN(this->get_logger(), "Publishing offboard control mode by position");
     }
 }
 

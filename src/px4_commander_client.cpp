@@ -66,12 +66,12 @@ Px4CommanderClient::Px4CommanderClient(
  */
 std::string Px4CommanderClient::_full_name(const std::string& service_name) const
 {
-    if (namespace_.empty())
+    if (this->namespace_.empty())
     {
         return service_name;
     }
 
-    return namespace_ + "/" + service_name;
+    return "/" + this->namespace_ + "/" + service_name;
 }
 
 

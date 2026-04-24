@@ -1,5 +1,5 @@
-ros__params:
-  px4_commander_server_node:
+/px4_commander/px4_commander_server_node:
+  ros__parameters:
     response_timeout: 5            # long int | [seconds]
     pre_offboard_waiting_time: 2.0 # double | [seconds]
     is_simulation: true            # bool | true for SITL, false for HITL

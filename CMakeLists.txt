@@ -93,15 +93,6 @@ install(
     lib/${PROJECT_NAME}
 )
 
-# ---- Launch --------------------------------------------------- 
-
-install(
-  DIRECTORY 
-    launch 
-  DESTINATION 
-    share/${PROJECT_NAME}
-)
-
 
 # ---- APIs ----------------------------------------------------- 
 
@@ -158,5 +149,17 @@ ament_export_dependencies(rclcpp std_srvs)
 ament_python_install_package(px4_commander
   PACKAGE_DIR px4_commander
 )
+
+
+# ---- Launch / Config ------------------------------------------ 
+
+install(
+  DIRECTORY 
+    launch
+    config
+  DESTINATION 
+    share/${PROJECT_NAME}
+)
+
 
 ament_package()

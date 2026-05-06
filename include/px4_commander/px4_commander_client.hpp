@@ -191,5 +191,5 @@ private:
     static constexpr const char* _SVC_DISARM                      = "disarm";
     static constexpr const char* _SVC_ENGAGE_OFFBOARD_MODE        = "engage_offboard_mode";
     static constexpr const char* _SVC_ENGAGE_LAND_MODE            = "engage_land_mode";
-    static constexpr const char* _SVC_PUBLISH_TRAJECTORY_SETPOINT = "publish_trajectory_setpoint";
+    static constexpr const char* _SVC_PUBLISH_TRAJECTORY_SETPOINT = "enable_trajectory_setpoint_publishing";
 };

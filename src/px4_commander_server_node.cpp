@@ -183,9 +183,9 @@ Px4CommanderServerNode::Px4CommanderServerNode(const std::string node_name)
         service_group_
     );
 
-    this->publish_trajectory_setpoint_service_ = this->create_service<std_srvs::srv::SetBool>(
-        "publish_trajectory_setpoint",
-        std::bind(&Px4CommanderServerNode::publish_trajectory_setpoint_service_callback, this, _1, _2),
+    this->enable_trajectory_setpoint_publishing_service_ = this->create_service<std_srvs::srv::SetBool>(
+        "enable_trajectory_setpoint_publishing",
+        std::bind(&Px4CommanderServerNode::enable_trajectory_setpoint_publishing_service_callback, this, _1, _2),
         rclcpp::QoS(rclcpp::ServicesQoS()),
         service_group_
     );
@@ -357,7 +357,7 @@ void Px4CommanderServerNode::publish_trajectory_setpoint_by_velocity()
 /** 
 * @brief Menage trajectory setpoint publishing
 */
-void Px4CommanderServerNode::publish_trajectory_setpoint_service_callback(
+void Px4CommanderServerNode::enable_trajectory_setpoint_publishing_service_callback(
     const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
     std::shared_ptr<std_srvs::srv::SetBool::Response> response)
 {

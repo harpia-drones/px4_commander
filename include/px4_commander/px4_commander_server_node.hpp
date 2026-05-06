@@ -193,7 +193,7 @@ private:
     //   SERVICE SERVERS
     // --------------------------------------------
     
-    rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr publish_trajectory_setpoint_service_;
+    rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr enable_trajectory_setpoint_publishing_service_;
     rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr arm_service_;
     rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr disarm_service_;
     rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr engage_offboard_mode_service_;
@@ -264,11 +264,12 @@ private:
     /* ---- Service server callback ---- */ 
 
     /** 
-     * @brief Menage trajectory setpoint publishing
+     * @brief Enable trajectory setpoint publishing
      */
-    void publish_trajectory_setpoint_service_callback(
+    void enable_trajectory_setpoint_publishing_service_callback(
         const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
         std::shared_ptr<std_srvs::srv::SetBool::Response> response);
+        
         
     /** 
         * @brief Arm the vehicle

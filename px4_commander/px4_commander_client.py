@@ -60,7 +60,7 @@ class Px4CommanderClient:
     _SVC_DISARM                      = "disarm"
     _SVC_ENGAGE_OFFBOARD_MODE        = "engage_offboard_mode"
     _SVC_ENGAGE_LAND_MODE            = "engage_land_mode"
-    _SVC_PUBLISH_TRAJECTORY_SETPOINT = "publish_trajectory_setpoint"
+    _SVC_PUBLISH_TRAJECTORY_SETPOINT = "enable_trajectory_setpoint_publishing"
 
 
     # --------------------------------------------

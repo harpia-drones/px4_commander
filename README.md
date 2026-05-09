@@ -57,7 +57,7 @@ Antes de aceitar o comando de troca de modo, o PX4 exige que o sistema externo j
 ## Instalação
 
 ```bash
-git clone https://github.com/harpia-drones/px4_commander.git
+git clone git@github.com:harpia-drones/px4_commander.git
 ```
 
 ### Dependências

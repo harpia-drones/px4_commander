@@ -13,6 +13,7 @@
   <depend>rclcpp</depend>
   <depend>std_srvs</depend>
   <depend>px4_msgs</depend>
+  <depend>px4_commander_interfaces</depend>
 
   <buildtool_depend>ament_cmake_python</buildtool_depend>
 

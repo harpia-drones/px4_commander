@@ -78,6 +78,7 @@
 
 /* ---- PX4 custom mode ---- */ 
 #include "px4_commander/px4_custom_mode.hpp"
+#include <px4_commander_interfaces/srv/auto_takeoff.hpp>
 
 
 /* Structs --------------------------------------------------------------- */
@@ -198,6 +199,7 @@ private:
     rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr disarm_service_;
     rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr engage_offboard_mode_service_;
     rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr engage_land_mode_service_;
+    rclcpp::Service<px4_commander_interfaces::srv::AutoTakeoff>::SharedPtr engage_takeoff_mode_service_;
 
 
     // --------------------------------------------
@@ -226,6 +228,11 @@ private:
      * @brief Send a command to land the vehicle
      */
     void land();
+
+    /**
+     * @brief Send a command to takeoff the vehicle
+     */
+    void takeoff(float takeoff_height);
     
     /**
      * @brief Send a command to engage offboard mode
@@ -298,6 +305,13 @@ private:
     void engage_land_mode_service_callback(
         const std::shared_ptr<std_srvs::srv::SetBool::Request> request,
         std::shared_ptr<std_srvs::srv::SetBool::Response> response);
+
+    /** 
+    * @brief Engage Takeoff mode
+    */
+    void engage_takeoff_mode_service_callback(
+        const std::shared_ptr<px4_commander_interfaces::srv::AutoTakeoff::Request> request,
+        std::shared_ptr<px4_commander_interfaces::srv::AutoTakeoff::Response> response);
 
 };
 

@@ -98,6 +98,12 @@ public:
     CommandResult engage_land_mode();
 
     /**
+     * @brief Engage automatic takeoff mode (AUTO_TAKEOFF)
+     * @return CommandResult with success flag and descriptive message
+     */
+    CommandResult engage_takeoff_mode();
+
+    /**
      * @brief Enable continuous trajectory setpoint publishing
      *
      * Publishes velocity-based offboard control mode and trajectory 
@@ -184,6 +190,7 @@ private:
     rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr cli_disarm_;
     rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr cli_offboard_;
     rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr cli_land_;
+    rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr cli_takeoff_;
     rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr cli_setpoint_;
 
     /* ---- Service names ---- */
@@ -191,5 +198,6 @@ private:
     static constexpr const char* _SVC_DISARM                      = "disarm";
     static constexpr const char* _SVC_ENGAGE_OFFBOARD_MODE        = "engage_offboard_mode";
     static constexpr const char* _SVC_ENGAGE_LAND_MODE            = "engage_land_mode";
+    static constexpr const char* _SVC_ENGAGE_TAKEOFF_MODE         = "engage_takeoff_mode";
     static constexpr const char* _SVC_PUBLISH_TRAJECTORY_SETPOINT = "enable_trajectory_setpoint_publishing";
 };

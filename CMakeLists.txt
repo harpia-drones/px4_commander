@@ -15,6 +15,7 @@ find_package(ament_cmake_python REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(px4_msgs REQUIRED)
+find_package(px4_commander_interfaces REQUIRED)
 
 
 # ---- Include directories --------------------------------------
@@ -41,6 +42,7 @@ ament_target_dependencies(px4_commander_server
   rclcpp
   std_srvs
   px4_msgs
+  px4_commander_interfaces
 )
 
 install(
@@ -139,7 +141,7 @@ install(
 )
 
 ament_export_targets(px4_commander_clientTargets HAS_LIBRARY_TARGET)
-ament_export_dependencies(rclcpp std_srvs)
+ament_export_dependencies(rclcpp std_srvs px4_commander_interfaces)
 
 
 # ============================

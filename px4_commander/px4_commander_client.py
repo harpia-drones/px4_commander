@@ -60,6 +60,7 @@ class Px4CommanderClient:
     _SVC_DISARM                      = "disarm"
     _SVC_ENGAGE_OFFBOARD_MODE        = "engage_offboard_mode"
     _SVC_ENGAGE_LAND_MODE            = "engage_land_mode"
+    _SVC_ENGAGE_TAKEOFF_MODE         = "engage_takeoff_mode"
     _SVC_PUBLISH_TRAJECTORY_SETPOINT = "enable_trajectory_setpoint_publishing"
 
 
@@ -89,6 +90,7 @@ class Px4CommanderClient:
         self.cli_disarm_   = self._create_client(self._SVC_DISARM)
         self.cli_offboard_ = self._create_client(self._SVC_ENGAGE_OFFBOARD_MODE)
         self.cli_land_     = self._create_client(self._SVC_ENGAGE_LAND_MODE)
+        self.cli_takeoff_  = self._create_client(self._SVC_ENGAGE_TAKEOFF_MODE)
         self.cli_setpoint_ = self._create_client(self._SVC_PUBLISH_TRAJECTORY_SETPOINT)
 
 
@@ -192,6 +194,14 @@ class Px4CommanderClient:
         """
         self.node_.get_logger().info("Requesting LAND mode...")
         return self._call(self.cli_land_, self._SVC_ENGAGE_LAND_MODE, data=True)
+
+
+    def engage_takeoff_mode(self) -> CommandResult:
+        """
+        Engage automatic takeoff mode (AUTO_TAKEOFF).
+        """
+        self.node_.get_logger().info("Requesting TAKEOFF mode...")
+        return self._call(self.cli_takeoff_, self._SVC_ENGAGE_TAKEOFF_MODE, data=True)
 
 
     def enable_trajectory_setpoint(self) -> CommandResult:

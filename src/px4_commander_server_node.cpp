@@ -176,6 +176,13 @@ Px4CommanderServerNode::Px4CommanderServerNode(const std::string node_name)
         service_group_
     );
 
+    this->engage_takeoff_mode_service_ = this->create_service<px4_commander_interfaces::srv::AutoTakeoff>(
+        "engage_takeoff_mode",
+        std::bind(&Px4CommanderServerNode::engage_takeoff_mode_service_callback, this, _1, _2),
+        rclcpp::QoS(rclcpp::ServicesQoS()),
+        service_group_
+    );
+
     this->engage_offboard_mode_service_ = this->create_service<std_srvs::srv::SetBool>(
         "engage_offboard_mode",
         std::bind(&Px4CommanderServerNode::engage_offboard_mode_service_callback, this, _1, _2),
@@ -264,6 +271,22 @@ void Px4CommanderServerNode::land()
     });
 
 	RCLCPP_INFO(this->get_logger(), "Auto Land command sent");
+}
+
+
+/**
+ * @brief Send a command to takeoff the vehicle
+ */
+void Px4CommanderServerNode::takeoff(float takeoff_height)
+{
+    this->publish_vehicle_command({
+        .command = VehicleCommand::VEHICLE_CMD_NAV_TAKEOFF,
+        .param4 = NAN, // Yaw angle (not used)
+        .param5 = NAN, // Latitude (not used)
+        .param6 = NAN, // Longitude (not used)
+        .param7 = takeoff_height
+    });
+    RCLCPP_INFO(this->get_logger(), "Auto Takeoff command sent with height: %f", takeoff_height);
 }
 
 
@@ -559,6 +582,44 @@ void Px4CommanderServerNode::engage_land_mode_service_callback(
             response->message = "Fail to switch to AUTO_LAND mode";
             RCLCPP_ERROR(this->get_logger(), "Fail to switch to AUTO_LAND mode");
         }
+    }
+}
+
+
+/** 
+* @brief Engage Takeoff mode
+*/
+void Px4CommanderServerNode::engage_takeoff_mode_service_callback(
+    const std::shared_ptr<px4_commander_interfaces::srv::AutoTakeoff::Request> request,
+    std::shared_ptr<px4_commander_interfaces::srv::AutoTakeoff::Response> response)
+{
+    float takeoff_height = request->altitude_amsl;
+    this->takeoff(takeoff_height);
+
+    // Maximum time for success after sending command
+    const auto timeout = std::chrono::steady_clock::now() + this->cv_response_timeout_;
+
+    std::unique_lock<std::mutex> lock(wait_success_mutex_);
+    const bool ok = wait_success_cv_.wait_until(
+        lock,
+        timeout,
+        [this]() {
+            const auto nav = current_nav_state_.load(std::memory_order_relaxed);
+            return (nav == VehicleStatus::NAVIGATION_STATE_AUTO_TAKEOFF);
+        }
+    );
+
+    if (ok)
+    {
+        response->success = true;
+        response->message = "Switched to AUTO_TAKEOFF mode";
+        RCLCPP_INFO(this->get_logger(), "Switched to AUTO_TAKEOFF mode");
+    }
+    else
+    {
+        response->success = false;
+        response->message = "Fail to switch to AUTO_TAKEOFF mode";
+        RCLCPP_ERROR(this->get_logger(), "Fail to switch to AUTO_TAKEOFF mode");
     }
 }
 

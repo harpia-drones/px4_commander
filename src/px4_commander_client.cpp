@@ -50,6 +50,7 @@ Px4CommanderClient::Px4CommanderClient(
     this->cli_disarm_   = this->_create_client(_SVC_DISARM);
     this->cli_offboard_ = this->_create_client(_SVC_ENGAGE_OFFBOARD_MODE);
     this->cli_land_     = this->_create_client(_SVC_ENGAGE_LAND_MODE);
+    this->cli_takeoff_  = this->_create_client(_SVC_ENGAGE_TAKEOFF_MODE);
     this->cli_setpoint_ = this->_create_client(_SVC_PUBLISH_TRAJECTORY_SETPOINT);
 
     RCLCPP_INFO(node_->get_logger(), "Px4CommanderClient initialized");
@@ -184,6 +185,16 @@ CommandResult Px4CommanderClient::engage_land_mode()
 {
     RCLCPP_INFO(node_->get_logger(), "Requesting LAND mode...");
     return this->_call(this->cli_land_, _SVC_ENGAGE_LAND_MODE, true);
+}
+
+
+/**
+ * @brief Engage automatic takeoff mode (AUTO_TAKEOFF)
+ */
+CommandResult Px4CommanderClient::engage_takeoff_mode()
+{
+    RCLCPP_INFO(node_->get_logger(), "Requesting TAKEOFF mode...");
+    return this->_call(this->cli_takeoff_, _SVC_ENGAGE_TAKEOFF_MODE, true);
 }
 
 

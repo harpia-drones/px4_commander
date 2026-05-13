@@ -41,8 +41,11 @@ Px4CommanderClient::Px4CommanderClient(
      * This prevents the caller's node from being added to a second executor
      * when spin_until_future_complete is called inside call(). 
      */
+    rclcpp::NodeOptions options;
+    options.use_global_arguments(false);
     client_node_ = std::make_shared<rclcpp::Node>(
-        std::string(node->get_name()) + "_commander_client"
+        std::string(node->get_name()) + "_commander_client",
+        options
     );
 
     // Create all clients

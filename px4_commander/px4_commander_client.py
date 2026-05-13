@@ -80,7 +80,7 @@ class Px4CommanderClient:
         # Create a dedicated internal node to own the service clients.
         # This prevents the caller's node from being added to a second executor
         # when spin_until_future_complete is called inside call().
-        self.node_ = rclpy.create_node(node_name)
+        self.node_ = rclpy.create_node(node_name, use_global_arguments=False)
         self.executor_ = SingleThreadedExecutor()
         self.executor_.add_node(self.node_)
 
